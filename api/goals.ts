@@ -8,7 +8,7 @@ export default async function handler(req: any, res: any) {
     try {
       const result = await sql`SELECT period, amount FROM monthly_goals ORDER BY period ASC`;
       const goals: Record<string, number> = {};
-      result.forEach(row => {
+      result.forEach((row: any) => {
         goals[row.period] = parseFloat(row.amount);
       });
       return res.status(200).json(goals);

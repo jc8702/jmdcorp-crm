@@ -112,11 +112,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const setMonthlyGoal = async (period: string, amount: number) => {
     try {
       await apiService.updateMonthlyGoal(period, amount);
-      setMonthlyGoals(prev => ({ ...prev, [period]: amount }));
+      setMonthlyGoals((prev: Record<string, number>) => ({ ...prev, [period]: amount }));
     } catch (error) {
       console.error('Erro ao salvar meta mensal:', error);
       // Fallback local em caso de erro na API
-      setMonthlyGoals(prev => ({ ...prev, [period]: amount }));
+      setMonthlyGoals((prev: Record<string, number>) => ({ ...prev, [period]: amount }));
     }
   };
 
@@ -224,9 +224,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         id: newLog.id.toString(),
         timestamp: new Date(newLog.timestamp).toLocaleTimeString()
       }, ...prev].slice(0, 50));
-    } catch (e) {
+    } catch (e: any) {
       // Local fallback if API fails
-      setSystemLogs(prev => [{
+      setSystemLogs((prev: SystemLog[]) => [{
         id: 'error-' + Date.now(),
         type, message, severity,
         timestamp: new Date().toLocaleTimeString()
@@ -242,7 +242,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       if (!result.success && result.queued) {
         addLog(status.state === 'OPEN' ? 'API_FAIL' : 'API_RETRY', result.message, 'WARNING');
-        setSyncQueue(prev => [{ id: Math.random().toString(36).substr(2, 9), data, timestamp: new Date().toISOString(), status: 'PENDING' }, ...prev]);
+        setSyncQueue((prev: OfflineSync[]) => [{ id: Math.random().toString(36).substr(2, 9), data, timestamp: new Date().toISOString(), status: 'PENDING' }, ...prev]);
         return { ...result, degraded: true };
       }
       
@@ -256,22 +256,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const currentMeta = useMemo(() => {
     if (selectedPeriod === 'Annual') {
-      return Object.values(monthlyGoals).reduce((acc, curr) => acc + curr, 0);
+      return Object.values(monthlyGoals).reduce((acc: number, curr: number) => acc + curr, 0);
     }
     return monthlyGoals[selectedPeriod] || 0;
   }, [selectedPeriod, monthlyGoals]);
 
   const totalPeriodo = useMemo(() => {
-    const fatured = billings.filter(b => b.status === 'FATURADO');
+    const fatured = billings.filter((b: Billing) => b.status === 'FATURADO');
     if (selectedPeriod === 'Annual') {
       const currentYear = new Date().getFullYear().toString();
       return fatured
-        .filter(b => b.data.startsWith(currentYear))
-        .reduce((acc, curr) => acc + curr.valor, 0);
+        .filter((b: Billing) => b.data.startsWith(currentYear))
+        .reduce((acc: number, curr: Billing) => acc + curr.valor, 0);
     }
     return fatured
-      .filter(b => b.data.startsWith(selectedPeriod))
-      .reduce((acc, curr) => acc + curr.valor, 0);
+      .filter((b: Billing) => b.data.startsWith(selectedPeriod))
+      .reduce((acc: number, curr: Billing) => acc + curr.valor, 0);
   }, [billings, selectedPeriod]);
 
   const totalFaturadoMes = totalPeriodo; // Alias for backward compatibility
@@ -297,12 +297,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // 1. Current Pending Billings for the TARGET PERIOD
     const existingPendente = billings
-      .filter(b => {
+      .filter((b: Billing) => {
         if (b.status !== 'PENDENTE') return false;
         if (isAnnual) return b.data.startsWith(String(currentYear));
         return b.data.startsWith(selectedPeriod);
       })
-      .reduce((acc, curr) => acc + curr.valor, 0);
+      .reduce((acc: number, curr: Billing) => acc + curr.valor, 0);
 
     // 2. Future Recurrence Projection
     let projection = 0;
@@ -349,12 +349,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       const meta = monthlyGoals[monthKey] || 0;
       const faturado = billings
-        .filter(b => b.status === 'FATURADO' && b.data.startsWith(monthKey))
-        .reduce((acc, curr) => acc + curr.valor, 0);
+        .filter((b: Billing) => b.status === 'FATURADO' && b.data.startsWith(monthKey))
+        .reduce((acc: number, curr: Billing) => acc + curr.valor, 0);
       
       const pendenteDirect = billings
-        .filter(b => b.status === 'PENDENTE' && b.data.startsWith(monthKey))
-        .reduce((acc, curr) => acc + curr.valor, 0);
+        .filter((b: Billing) => b.status === 'PENDENTE' && b.data.startsWith(monthKey))
+        .reduce((acc: number, curr: Billing) => acc + curr.valor, 0);
       
       let projected = 0;
       if (m > currentMonth) {
@@ -384,7 +384,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const addClient = async (data: any) => {
     const saved = await apiService.addClient(data);
-    setClients(prev => [...prev, {
+    setClients((prev: Client[]) => [...prev, {
       id: saved.id.toString(),
       cnpj: saved.cnpj ?? '',
       razaoSocial: saved.razao_social ?? '',
@@ -415,7 +415,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
  
   const updateClient = async (id: string, data: any) => {
     const saved = await apiService.updateClient(id, data);
-    setClients(prev => prev.map(c => c.id === id ? {
+    setClients((prev: Client[]) => prev.map((c: Client) => c.id === id ? {
       id: saved.id.toString(),
       cnpj: saved.cnpj ?? '',
       razaoSocial: saved.razao_social ?? '',
@@ -446,38 +446,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const removeClient = async (id: string) => {
     await apiService.removeClient(id);
-    setClients(prev => prev.filter(c => c.id !== id));
+    setClients((prev: Client[]) => prev.filter((c: Client) => c.id !== id));
     addLog('SYSTEM_INFO', `Cliente removido ID: ${id}`, 'WARNING');
   };
 
   const addBilling = async (data: any) => {
     const saved = await apiService.addBilling(data);
-    setBillings(prev => [{ ...saved, id: saved.id.toString(), valor: Number(saved.valor), status: saved.status || 'FATURADO' }, ...prev]);
+    setBillings((prev: Billing[]) => [{ ...saved, id: saved.id.toString(), valor: Number(saved.valor), status: saved.status || 'FATURADO' }, ...prev]);
     addLog('SYSTEM_INFO', `Faturamento registrado: ${data.nf}`, 'INFO');
   };
 
   const updateBilling = async (id: string, data: any) => {
     const saved = await apiService.updateBilling(id, data);
-    setBillings(prev => prev.map(b => b.id === id ? { ...saved, id: saved.id.toString(), valor: Number(saved.valor), status: saved.status || 'FATURADO' } : b));
+    setBillings((prev: Billing[]) => prev.map((b: Billing) => b.id === id ? { ...saved, id: saved.id.toString(), valor: Number(saved.valor), status: saved.status || 'FATURADO' } : b));
     addLog('SYSTEM_INFO', `Faturamento atualizado: ${saved.nf}`, 'INFO');
   };
 
   const removeBilling = async (id: string) => {
     await apiService.removeBilling(id);
-    setBillings(prev => prev.filter(b => b.id !== id));
+    setBillings((prev: Billing[]) => prev.filter((b: Billing) => b.id !== id));
     addLog('SYSTEM_INFO', `Faturamento removido ID: ${id}`, 'WARNING');
   };
 
   const updateKanbanStatus = async (type: any, id: string, newStatus: string) => {
     await apiService.updateKanbanStatus(id, newStatus);
     const setter = type === 'project' ? setProjects : setVisits;
-    setter(prev => prev.map(i => i.id === id ? { ...i, status: newStatus } : i));
+    setter((prev: KanbanItem[]) => prev.map((i: KanbanItem) => i.id === id ? { ...i, status: newStatus } : i));
   };
 
   const addKanbanItem = async (data: any) => {
     const saved = await apiService.addKanbanItem(data);
     const setter = data.type === 'project' ? setProjects : setVisits;
-    setter(prev => [...prev, { ...saved, id: saved.id.toString() }]);
+    setter((prev: KanbanItem[]) => [...prev, { ...saved, id: saved.id.toString() }]);
   };
 
   return (

@@ -9,14 +9,12 @@ import PriceSimulator from './features/simulator/PriceSimulator';
 import Settings from './features/settings/Settings';
 import SystemHealth from './features/admin/SystemHealth';
 import { AppProvider } from './context/AppContext';
-import Gatekeeper from './components/admin/Gatekeeper';
 
 type Tab = 'dashboard' | 'clients' | 'billing' | 'projects' | 'visits' | 'simulator' | 'settings' | 'system-health';
 
 function App() {
   return (
     <AppProvider>
-      <Gatekeeper />
       <AppContent />
     </AppProvider>
   );
