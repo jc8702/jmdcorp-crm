@@ -3,7 +3,7 @@ import { useAppContext } from '../../context/AppContext';
 
 const Settings: React.FC = () => {
   const { 
-    monthlyGoals, setMonthlyGoal 
+    monthlyGoals, setMonthlyGoal, selectedPeriod 
   } = useAppContext();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -17,6 +17,12 @@ const Settings: React.FC = () => {
   }, [isEditing, monthlyGoals]);
 
   const handleSave = () => {
+    if (selectedPeriod === 'Annual') {
+      // No single annual goal defined in this simplified UI, 
+      // typically we'd edit monthly components.
+      setIsEditing(false);
+      return;
+    }
     Object.entries(tempGoals).forEach(([period, amount]) => {
       if (monthlyGoals[period] !== amount) {
         setMonthlyGoal(period, amount);
@@ -132,7 +138,7 @@ const Settings: React.FC = () => {
            <div className="card" style={{ borderStyle: 'dotted', background: 'transparent' }}>
               <h3 style={{ fontSize: '1rem', color: 'var(--danger)', marginBottom: '1rem' }}>Informações do Sistema</h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Versão: 1.2.0-stable<br/>
+                Versão: 1.2.1-stable<br/>
                 Ambiente: Produção<br/>
                 Última sincronização de preços: Hoje, 08:30
               </p>
