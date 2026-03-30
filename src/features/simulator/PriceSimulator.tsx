@@ -56,6 +56,9 @@ const PriceSimulator: React.FC = () => {
 
     setSyncStatus({ loading: true, message: 'Validando Proposta (SRE Module)...' });
 
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Check if circuit is open
     const result = await syncToSalesforce({
       product: selectedProduct,
       basePrice: parseFloat(basePrice),
