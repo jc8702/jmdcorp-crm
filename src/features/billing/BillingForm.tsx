@@ -110,7 +110,7 @@ const BillingModule: React.FC = () => {
     }
   };
 
-  const headers = ['Data', 'Status', 'Nota Fiscal', 'Pedido', 'Cliente', 'Valor R$', 'Ações'];
+  const headers = ['Data', 'Status', 'Nota Fiscal', 'Pedido', 'Cliente', 'Código ERP', 'Valor R$', 'Ações'];
 
   const renderRow = (b: Billing) => (
     <>
@@ -148,6 +148,7 @@ const BillingModule: React.FC = () => {
       <td style={{ padding: '1rem', fontSize: '0.875rem' }}>{b.nf}</td>
       <td style={{ padding: '1rem', fontSize: '0.875rem' }}>{b.pedido}</td>
       <td style={{ padding: '1rem', fontSize: '0.875rem' }}>{b.cliente}</td>
+      <td style={{ padding: '1rem', fontSize: '0.875rem', color: 'var(--primary)' }}>{b.erp || '-'}</td>
       <td style={{ padding: '1rem', fontWeight: 'bold' }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(b.valor)}</td>
       <td style={{ padding: '1rem' }}>
          <div style={{ display: 'flex', gap: '0.75rem' }}>

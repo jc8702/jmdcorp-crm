@@ -450,7 +450,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         month: name,
         meta,
         faturado,
-        carteira: pendenteDirect + projected
+        carteira: pendenteDirect + projected,
+        activeClients: new Set(billings
+          .filter((b: Billing) => b.status === 'FATURADO' && b.data.startsWith(monthKey))
+          .map(b => b.cliente)).size
       };
     });
   }, [billings, clients, monthlyGoals]);

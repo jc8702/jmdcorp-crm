@@ -2,12 +2,14 @@ import React from 'react';
 import Gauge from '../../components/charts/Gauge';
 import StackedBarChart from '../../components/charts/StackedBarChart';
 import DataTable from '../../components/common/DataTable';
+import Modal from '../../components/common/Modal';
 import { useAppContext } from '../../context/AppContext';
 import type { Billing } from '../../context/AppContext';
 
 const Dashboard: React.FC = () => {
   const { billings, totalPeriodo, totalPedidosCarteira, yearlyEvolutionData, currentMeta, selectedPeriod, setSelectedPeriod } = useAppContext();
   const [recentPage, setRecentPage] = React.useState(1);
+  const [drilldownModal, setDrilldownModal] = React.useState<{ open: boolean; title: string; clients: any[] }>({ open: false, title: '', clients: [] });
   const recentItemsPerPage = 5;
 
   const percentualMeta = currentMeta > 0 ? Math.min(Math.round((totalPeriodo / currentMeta) * 100), 100) : 0;
@@ -41,9 +43,33 @@ const Dashboard: React.FC = () => {
     { id: '2026-12', label: 'Dezembro 2026' },
   ];
 
+  const activeClientsYear = React.useMemo(() => {
+    const currentYear = new Date().getFullYear().toString();
+    const yearly = faturedBillings.filter(b => b.data.startsWith(currentYear));
+    const uniqueClients = Array.from(new Set(yearly.map(b => b.cliente)));
+    return uniqueClients.map(name => {
+        const value = yearly.filter(b => b.cliente === name).reduce((acc, curr) => acc + curr.valor, 0);
+        return { name, value };
+    }).sort((a, b) => b.value - a.value);
+  }, [faturedBillings]);
+
+  const activeClientsMonth = React.useMemo(() => {
+    const period = selectedPeriod === 'Annual' 
+      ? `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}` 
+      : selectedPeriod;
+    const monthly = faturedBillings.filter(b => b.data.startsWith(period));
+    const uniqueClients = Array.from(new Set(monthly.map(b => b.cliente)));
+    return uniqueClients.map(name => {
+        const value = monthly.filter(b => b.cliente === name).reduce((acc, curr) => acc + curr.valor, 0);
+        return { name, value };
+    }).sort((a, b) => b.value - a.value);
+  }, [faturedBillings, selectedPeriod]);
+
   const currentPeriodBillings = selectedPeriod === 'Annual' 
     ? faturedBillings.filter(b => b.data.startsWith(new Date().getFullYear().toString()))
     : faturedBillings.filter(b => b.data.startsWith(selectedPeriod));
+
+  const ticketMedioCliente = activeClientsMonth.length > 0 ? (totalPeriodo / activeClientsMonth.length) : 0;
 
   // Recent Billings Pagination
   const recentTotalPages = Math.max(1, Math.ceil(billings.length / recentItemsPerPage));
@@ -108,23 +134,43 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
         <div className="card glass">
-           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Ticket Médio ({selectedPeriod === 'Annual' ? 'Ano' : 'Mês'})</p>
+           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Ticket Médio (Faturamento / NFs)</p>
            <h4 style={{ fontSize: '1.25rem' }}>{currentPeriodBillings.length > 0 ? formatCurrency(totalPeriodo / currentPeriodBillings.length) : 'R$ 0,00'}</h4>
         </div>
-        <div className="card glass">
-           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Quantidade de NFs</p>
-           <h4 style={{ fontSize: '1.25rem' }}>{currentPeriodBillings.length}</h4>
+        <div className="card glass" style={{ borderLeft: '4px solid var(--primary)' }}>
+           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Ticket Médio (Faturamento / Clientes)</p>
+           <h4 style={{ fontSize: '1.25rem', color: 'var(--primary)' }}>{formatCurrency(ticketMedioCliente)}</h4>
         </div>
-        <div className="card glass" style={{ borderLeft: '4px solid var(--warning)' }}>
+        <div className="card glass" style={{ borderLeft: '4px solid var(--warning)', cursor: 'pointer' }}>
            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Pedidos em Carteira</p>
            <h4 style={{ fontSize: '1.25rem', color: 'var(--warning)' }}>{formatCurrency(totalPedidosCarteira)}</h4>
         </div>
-         <div className="card glass">
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Database Status</p>
-            <h4 style={{ fontSize: '1.25rem', color: 'var(--success)' }}>Online</h4>
-         </div>
+        <div 
+          className="card glass" 
+          style={{ borderLeft: '4px solid var(--primary)', cursor: 'pointer', transition: 'transform 0.2s' }}
+          onClick={() => setDrilldownModal({ open: true, title: 'Clientes Ativos no Período', clients: activeClientsMonth })}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Clientes Ativos (Mês) 🔍</p>
+           <h4 style={{ fontSize: '1.25rem', color: 'var(--primary)' }}>{activeClientsMonth.length}</h4>
+        </div>
+        <div 
+          className="card glass" 
+          style={{ borderLeft: '4px solid var(--success)', cursor: 'pointer', transition: 'transform 0.2s' }}
+          onClick={() => setDrilldownModal({ open: true, title: 'Clientes Ativos no Ano', clients: activeClientsYear })}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Clientes Ativos (Ano) 🔍</p>
+           <h4 style={{ fontSize: '1.25rem', color: 'var(--success)' }}>{activeClientsYear.length}</h4>
+        </div>
+        <div className="card glass">
+           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total de Notas Fiscais</p>
+           <h4 style={{ fontSize: '1.25rem' }}>{currentPeriodBillings.length}</h4>
+        </div>
       </div>
 
       <div>
@@ -133,8 +179,29 @@ const Dashboard: React.FC = () => {
             title="Evolução Mensal (Meta vs Faturado vs Carteira)" 
          />
       </div>
+
+      <Modal 
+        isOpen={drilldownModal.open} 
+        onClose={() => setDrilldownModal(prev => ({ ...prev, open: false }))}
+        title={drilldownModal.title}
+      >
+        <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+            <DataTable 
+                headers={['Cliente', 'Total Faturado']}
+                data={drilldownModal.clients}
+                renderRow={(c) => (
+                    <>
+                        <td style={{ padding: '1rem' }}>{c.name}</td>
+                        <td style={{ padding: '1rem', fontWeight: 'bold' }}>{formatCurrency(c.value)}</td>
+                    </>
+                )}
+            />
+        </div>
+      </Modal>
     </div>
   );
 };
 
 export default Dashboard;
+
+

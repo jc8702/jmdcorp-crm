@@ -5,6 +5,7 @@ interface ChartData {
   meta: number;
   faturado: number;
   carteira: number;
+  activeClients?: number;
 }
 
 interface StackedBarChartProps {
@@ -88,6 +89,29 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data, title }) => {
                       transition: 'height 0.5s ease-out'
                     }} title={`Faturado: ${formatValue(d.faturado)}`} />
                   </div>
+
+                  {/* Active Clients Indicator (Indicator Overlay) */}
+                  {d.activeClients !== undefined && d.activeClients > 0 && (
+                    <div style={{ 
+                      position: 'absolute', 
+                      bottom: (faturadoHeight / 2) - 10, // Centro da barra faturada
+                      left: 0, right: 0,
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
+                      pointerEvents: 'none'
+                    }}>
+                       <div style={{ 
+                         background: 'white', 
+                         color: '#059669', 
+                         fontSize: '0.65rem', 
+                         fontWeight: 'bold', 
+                         padding: '1px 4px', 
+                         borderRadius: '10px',
+                         boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                       }}>
+                         {d.activeClients} cli
+                       </div>
+                    </div>
+                  )}
                 </div>
                 <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>{d.month}</span>
               </div>
@@ -109,6 +133,10 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data, title }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <div style={{ width: '15px', height: '3px', background: 'var(--primary)' }}></div>
           <span style={{ color: 'var(--text-muted)' }}>Meta</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ width: '18px', height: '14px', borderRadius: '10px', background: 'white', color: '#059669', fontSize: '0.6rem', fontWeight: 'bold', border: '1px solid #059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>N</div>
+          <span style={{ color: 'var(--text-muted)' }}>Clientes Atendidos</span>
         </div>
       </div>
     </div>
