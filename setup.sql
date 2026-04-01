@@ -35,6 +35,18 @@ CREATE TABLE kanban_items (
     label TEXT,
     status TEXT NOT NULL,
     type TEXT NOT NULL, -- 'project' ou 'visit'
+    contact_name TEXT,
+    contact_role TEXT,
+    email TEXT,
+    phone TEXT,
+    city TEXT,
+    state TEXT,
+    value DECIMAL(12,2),
+    temperature TEXT,
+    visit_date DATE,
+    visit_time TEXT,
+    visit_type TEXT,
+    observations TEXT,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -18,11 +18,20 @@ export default async function handler(req: any, res: any) {
   }
 
   if (req.method === 'POST') {
-    const { title, subtitle, label, status, type } = req.body;
+    const { 
+      title, subtitle, label, status, type, contact_name, contact_role, email, phone, city, state, value, temperature,
+      visit_date, visit_time, visit_type, observations
+    } = req.body;
     try {
       const result = await sql`
-        INSERT INTO kanban_items (title, subtitle, label, status, type)
-        VALUES (${title}, ${subtitle}, ${label}, ${status}, ${type})
+        INSERT INTO kanban_items (
+          title, subtitle, label, status, type, contact_name, contact_role, email, phone, city, state, value, temperature,
+          visit_date, visit_time, visit_type, observations
+        )
+        VALUES (
+          ${title}, ${subtitle}, ${label}, ${status}, ${type}, ${contact_name}, ${contact_role}, ${email}, ${phone}, ${city}, ${state}, ${value}, ${temperature},
+          ${visit_date}, ${visit_time}, ${visit_type}, ${observations}
+        )
         RETURNING *
       `;
       return res.status(201).json(result[0]);

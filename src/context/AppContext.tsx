@@ -53,6 +53,19 @@ export type KanbanItem = {
   label?: string; 
   status: string; 
   type: 'project' | 'visit';
+  contactName?: string;
+  contactRole?: string;
+  email?: string;
+  phone?: string;
+  city?: string;
+  state?: string;
+  value?: number;
+  temperature?: string;
+  visitDate?: string;
+  visitTime?: string;
+  visitType?: string;
+  observations?: string;
+  // Legacy / Hybrid fields
   dateTime?: string;
   visitFormat?: 'Presencial' | 'Online';
   description?: string;
@@ -105,6 +118,7 @@ interface AppContextType {
   updateKanbanItem: (id: string, data: Partial<KanbanItem>) => Promise<void>;
   currentMeta: number;
   totalPeriodo: number;
+  addLog: (type: string, message: string, severity: SystemLog['severity']) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -265,6 +279,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const kItems = finalKanban.map((k: any) => ({ 
         ...k, 
         id: k.id?.toString() || Math.random().toString(),
+        contactName: k.contact_name || k.contactName,
+        contactRole: k.contact_role || k.contactRole,
+        value: k.value ? Number(k.value) : undefined,
+        visitDate: k.visit_date || k.visitDate,
+        visitTime: k.visit_time || k.visitTime,
+        visitType: k.visit_type || k.visitType,
+        observations: k.observations || k.observations,
         dateTime: k.date_time || k.dateTime,
         visitFormat: k.visit_format || k.visitFormat,
         description: k.description
@@ -555,27 +576,55 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const addKanbanItem = async (data: any) => {
-    const saved = await apiService.addKanbanItem(data);
+    const payload = {
+      ...data,
+      contact_name: data.contactName,
+      contact_role: data.contactRole,
+      visit_date: data.visitDate,
+      visit_time: data.visitTime,
+      visit_type: data.visitType,
+      value: data.value,
+      email: data.email,
+      phone: data.phone,
+      city: data.city,
+      state: data.state,
+      temperature: data.temperature,
+      observations: data.observations || data.description
+    };
+    const saved = await apiService.addKanbanItem(payload);
     const setter = data.type === 'project' ? setProjects : setVisits;
-    setter((prev: KanbanItem[]) => [...prev, { 
-      ...saved, 
+    const mapped = {
+      ...saved,
       id: saved.id.toString(),
-      dateTime: saved.date_time || saved.dateTime,
-      visitFormat: saved.visit_format || saved.visitFormat
-    }]);
+      contactName: saved.contact_name,
+      contactRole: saved.contact_role,
+      value: saved.value ? Number(saved.value) : undefined,
+      visitDate: saved.visit_date,
+      visitTime: saved.visit_time,
+      visitType: saved.visit_type,
+      observations: saved.observations,
+      dateTime: saved.date_time,
+      visitFormat: saved.visit_format,
+      description: saved.description
+    };
+    setter((prev: KanbanItem[]) => [...prev, mapped]);
   };
 
   const updateKanbanItem = async (id: string, data: Partial<KanbanItem>) => {
-    const saved = await apiService.updateKanbanStatus(id, data.status!, {
-      title: data.title,
-      subtitle: data.subtitle,
-      label: data.label,
+    const payload = {
+      ...data,
+      contact_name: data.contactName,
+      contact_role: data.contactRole,
+      visit_date: data.visitDate,
+      visit_time: data.visitTime,
+      visit_type: data.visitType,
       date_time: data.dateTime,
       visit_format: data.visitFormat,
-      description: data.description
-    });
-    setProjects((prev: KanbanItem[]) => prev.map((i: KanbanItem) => i.id === id ? { ...i, ...data } : i));
-    setVisits((prev: KanbanItem[]) => prev.map((i: KanbanItem) => i.id === id ? { ...i, ...data } : i));
+      description: data.description || data.observations
+    };
+    await apiService.updateKanbanStatus(id, data.status!, payload);
+    const setter = data.type === 'project' ? setProjects : setVisits;
+    setter((prev: KanbanItem[]) => prev.map((i: KanbanItem) => i.id === id ? { ...i, ...data } : i));
   };
 
   return (
