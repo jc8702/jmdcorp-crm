@@ -80,3 +80,4 @@ ALTER TABLE clients ADD COLUMN IF NOT EXISTS situacao_cadastral TEXT DEFAULT 'AT
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS data_situacao_cadastral TEXT;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS motivo_situacao TEXT;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS codigo_erp TEXT;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS frequencia_compra TEXT DEFAULT 'Mensal';

@@ -194,7 +194,7 @@ const Clients: React.FC = () => {
           background: client.situacaoCadastral === 'ATIVA' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
           color: client.situacaoCadastral === 'ATIVA' ? '#10b981' : '#ef4444'
         }}>
-          {client.situacaoCadastral}
+          {client.situacaoCadastral || 'ATIVA'}
         </span>
       </td>
       <td style={{ padding: '1rem' }}>
@@ -497,18 +497,24 @@ const Clients: React.FC = () => {
             </div>
           </div>
 
-          <SectionTitle>Seção 5 — Situação Cadastral</SectionTitle>
           <div style={{ 
-            display: 'flex', justifyContent: 'center', padding: '1rem', 
+            display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1rem', 
             background: formData.situacaoCadastral === 'ATIVA' ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)',
-            borderRadius: 'var(--radius-md)'
+            borderRadius: 'var(--radius-md)', border: '1px solid var(--border)'
           }}>
-            <span style={{ 
-              fontSize: '1.2rem', fontWeight: 'bold', 
-              color: formData.situacaoCadastral === 'ATIVA' ? '#10b981' : '#ef4444' 
-            }}>
-              SITUAÇÃO: {formData.situacaoCadastral}
-            </span>
+            <label style={{ fontSize: '0.75rem', fontWeight: '700' }}>STATUS DO CLIENTE</label>
+            <select 
+              className="input"
+              style={{ 
+                fontSize: '1.2rem', fontWeight: 'bold', 
+                color: formData.situacaoCadastral === 'ATIVA' ? '#10b981' : '#ef4444' 
+              }}
+              value={formData.situacaoCadastral}
+              onChange={e => setFormData({ ...formData, situacaoCadastral: e.target.value })}
+            >
+              <option value="ATIVA">✅ ATIVO (Liberado para Projeção)</option>
+              <option value="INATIVA">❌ INATIVO (Excluir da Projeção)</option>
+            </select>
           </div>
 
           <SectionTitle>Seção 6 — Integração Interna</SectionTitle>
@@ -538,6 +544,7 @@ const Clients: React.FC = () => {
               <option value="Trimestral">Trimestral</option>
               <option value="Semestral">Semestral</option>
               <option value="Anual">Anual</option>
+              <option value="Ultima Compra">Última Compra (Projetar Valor Base)</option>
             </select>
           </div>
 

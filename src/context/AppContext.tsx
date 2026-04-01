@@ -34,7 +34,7 @@ export type Client = {
   codigoErp?: string;
   // Legado
   historico?: string;
-  frequenciaCompra?: 'Mensal' | 'Bimestral' | 'Trimestral' | 'Semestral' | 'Anual';
+  frequenciaCompra?: 'Mensal' | 'Bimestral' | 'Trimestral' | 'Semestral' | 'Anual' | 'Ultima Compra';
 };
 export type Billing = { 
   id: string; 
@@ -380,7 +380,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // 2. Future Recurrence Projection
     let projection = 0;
 
-    clients.forEach(client => {
+    clients
+      .filter(client => (client.situacaoCadastral || 'ATIVA') === 'ATIVA')
+      .forEach(client => {
       const frequency = client.frequenciaCompra || 'Mensal';
       const clientBillings = billings.filter(b => b.cliente === client.razaoSocial);
       
@@ -395,7 +397,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       targetMonths.forEach(m => {
         // Simple heuristic: if month fits the recurring pattern
-        const isPurchaseMonth = (m - 1) % interval === 0;
+        const isPurchaseMonth = frequency === 'Ultima Compra' || ((m - 1) % interval === 0);
 
         if (isPurchaseMonth) {
           const monthKey = `${currentYear}-${String(m).padStart(2, '0')}`;
@@ -431,7 +433,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       let projected = 0;
       if (m > currentMonth) {
-        clients.forEach(client => {
+        clients
+          .filter(client => (client.situacaoCadastral || 'ATIVA') === 'ATIVA')
+          .forEach(client => {
           const frequency = client.frequenciaCompra || 'Mensal';
           const clientBillings = billings.filter(b => b.cliente === client.razaoSocial);
           const lastBilling = [...clientBillings].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())[0];
@@ -439,7 +443,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           if (baseValue <= 0) return;
 
           const interval = { 'Mensal': 1, 'Bimestral': 2, 'Trimestral': 3, 'Semestral': 6, 'Anual': 12 }[frequency] || 1;
-          const isPurchaseMonth = (m - 1) % interval === 0;
+          const isPurchaseMonth = frequency === 'Ultima Compra' || ((m - 1) % interval === 0);
           if (isPurchaseMonth && !clientBillings.some(b => b.data.startsWith(monthKey))) {
             projected += baseValue;
           }
