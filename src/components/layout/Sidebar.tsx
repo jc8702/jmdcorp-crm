@@ -39,7 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
       <div style={{ marginBottom: '2rem', padding: '0 0.75rem', overflow: 'hidden' }}>
         <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <span style={{ fontSize: '1rem', background: 'var(--primary)', color: 'white', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px' }}>J</span>
-          <span className="sidebar-label">JMDCORP</span>
+          <span className="sidebar-label">JMD CRM</span>
         </h1>
       </div>
 

@@ -11,6 +11,9 @@ export interface KanbanItem {
   visitFormat?: string;
   description?: string;
   projectId?: string;
+  value?: number;
+  visitDate?: string;
+  visitTime?: string;
 }
 
 interface KanbanBoardProps {
@@ -52,8 +55,12 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
             borderRadius: 'var(--radius-lg)', 
             padding: '1.25rem',
             minHeight: '400px',
+            maxHeight: 'calc(100vh - 280px)',
+            overflowY: 'auto',
             border: '2px dashed transparent',
-            transition: 'border-color 0.2s ease'
+            transition: 'border-color 0.2s ease',
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'var(--primary) transparent'
           }}
           onDragEnter={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; }}
           onDragLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; }}
@@ -108,9 +115,20 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                       )}
                     </div>
                   </div>
-                  {item.subtitle && <p style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{item.subtitle}</p>}
+                  {item.visitDate && (
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span>📅 {item.visitDate.split('-').reverse().join('/')}</span>
+                      {item.visitTime && <span>🕒 {item.visitTime}</span>}
+                    </div>
+                  )}
+
+                  {item.value !== undefined && item.value > 0 && (
+                    <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#10b981', marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      💰 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.value)}
+                    </div>
+                  )}
                   
-                  {item.dateTime && (
+                  {item.dateTime && !item.visitDate && (
                     <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       📅 {new Date(item.dateTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                     </div>
