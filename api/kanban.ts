@@ -20,17 +20,17 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'POST') {
     const { 
       title, subtitle, label, status, type, contact_name, contact_role, email, phone, city, state, value, temperature,
-      visit_date, visit_time, visit_type, observations
+      visit_date, visit_time, visit_type, observations, project_id
     } = req.body;
     try {
       const result = await sql`
         INSERT INTO kanban_items (
           title, subtitle, label, status, type, contact_name, contact_role, email, phone, city, state, value, temperature,
-          visit_date, visit_time, visit_type, observations
+          visit_date, visit_time, visit_type, observations, project_id
         )
         VALUES (
           ${title}, ${subtitle}, ${label}, ${status}, ${type}, ${contact_name}, ${contact_role}, ${email}, ${phone}, ${city}, ${state}, ${value}, ${temperature},
-          ${visit_date}, ${visit_time}, ${visit_type}, ${observations}
+          ${visit_date}, ${visit_time}, ${visit_type}, ${observations}, ${project_id}
         )
         RETURNING *
       `;
@@ -42,11 +42,28 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'PATCH' || req.method === 'PUT') {
     const { id } = req.query;
-    const { status } = req.body;
     try {
       const result = await sql`
         UPDATE kanban_items
-        SET status = ${status}, updated_at = CURRENT_TIMESTAMP
+        SET 
+          status = ${req.body.status || null}, 
+          title = ${req.body.title || null},
+          subtitle = ${req.body.subtitle || null},
+          label = ${req.body.label || null},
+          contact_name = ${req.body.contact_name || null},
+          contact_role = ${req.body.contact_role || null},
+          email = ${req.body.email || null},
+          phone = ${req.body.phone || null},
+          city = ${req.body.city || null},
+          state = ${req.body.state || null},
+          value = ${req.body.value || null},
+          temperature = ${req.body.temperature || null},
+          visit_date = ${req.body.visit_date || null},
+          visit_time = ${req.body.visit_time || null},
+          visit_type = ${req.body.visit_type || null},
+          observations = ${req.body.observations || null},
+          project_id = ${req.body.project_id || null},
+          updated_at = CURRENT_TIMESTAMP
         WHERE id = ${id}
         RETURNING *
       `;

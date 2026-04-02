@@ -10,6 +10,7 @@ export interface KanbanItem {
   dateTime?: string;
   visitFormat?: string;
   description?: string;
+  projectId?: string;
 }
 
 interface KanbanBoardProps {
@@ -18,9 +19,10 @@ interface KanbanBoardProps {
   onMove: (id: string, newStatus: string) => void;
   onEdit?: (item: KanbanItem) => void;
   onDelete?: (id: string) => void;
+  projectNames?: Record<string, string>;
 }
 
-const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdit, onDelete }) => {
+const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdit, onDelete, projectNames }) => {
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
   const handleDragStart = (id: string) => {
@@ -129,6 +131,24 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                       fontWeight: 'bold'
                     }}>
                       {item.visitFormat}
+                    </div>
+                  )}
+                  
+                  {item.projectId && projectNames && projectNames[item.projectId] && (
+                    <div style={{ 
+                      fontSize: '0.65rem', 
+                      color: 'var(--primary)', 
+                      marginTop: '0.5rem', 
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      padding: '4px 8px',
+                      background: 'rgba(52, 115, 255, 0.05)',
+                      borderRadius: '4px',
+                      border: '1px solid rgba(52, 115, 255, 0.1)'
+                    }}>
+                      🚀 {projectNames[item.projectId]}
                     </div>
                   )}
 

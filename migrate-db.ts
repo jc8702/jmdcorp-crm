@@ -19,6 +19,10 @@ async function migrate() {
     await sql`ALTER TABLE clients ADD COLUMN IF NOT EXISTS codigo_erp TEXT`;
     console.log('Coluna codigo_erp adicionada a clients.');
 
+    // 4. Kanban Items - project_id (vínculo entre visitas e projetos)
+    await sql`ALTER TABLE kanban_items ADD COLUMN IF NOT EXISTS project_id INT REFERENCES kanban_items(id) ON DELETE SET NULL`;
+    console.log('Coluna project_id adicionada a kanban_items.');
+
     console.log('Migração concluída com sucesso!');
     process.exit(0);
   } catch (e) {

@@ -65,6 +65,7 @@ export type KanbanItem = {
   visitTime?: string;
   visitType?: string;
   observations?: string;
+  projectId?: string;
   // Legacy / Hybrid fields
   dateTime?: string;
   visitFormat?: 'Presencial' | 'Online';
@@ -119,7 +120,6 @@ interface AppContextType {
   removeKanbanItem: (id: string) => Promise<void>;
   currentMeta: number;
   totalPeriodo: number;
-  addLog: (type: string, message: string, severity: SystemLog['severity']) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -289,6 +289,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         observations: k.observations || k.observations,
         dateTime: k.date_time || k.dateTime,
         visitFormat: k.visit_format || k.visitFormat,
+        projectId: k.project_id?.toString(),
         description: k.description
       }));
       setProjects(kItems.filter((i: any) => (i.type || i.type_kanban) === 'project'));
@@ -590,6 +591,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       city: data.city,
       state: data.state,
       temperature: data.temperature,
+      project_id: data.projectId,
       observations: data.observations || data.description
     };
     const saved = await apiService.addKanbanItem(payload);
@@ -604,6 +606,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       visitTime: saved.visit_time,
       visitType: saved.visit_type,
       observations: saved.observations,
+      projectId: saved.project_id?.toString(),
       dateTime: saved.date_time,
       visitFormat: saved.visit_format,
       description: saved.description
@@ -621,6 +624,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       visit_type: data.visitType,
       date_time: data.dateTime,
       visit_format: data.visitFormat,
+      project_id: data.projectId,
       description: data.description || data.observations
     };
     await apiService.updateKanbanStatus(id, data.status!, payload);

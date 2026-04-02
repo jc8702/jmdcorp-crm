@@ -4,7 +4,7 @@ import Modal from '../../components/common/Modal';
 import { useAppContext } from '../../context/AppContext';
 
 const VisitKanban: React.FC = () => {
-  const { visits, updateKanbanStatus, addKanbanItem, updateKanbanItem, removeKanbanItem } = useAppContext();
+  const { visits, updateKanbanStatus, addKanbanItem, updateKanbanItem, removeKanbanItem, projects } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [cities, setCities] = useState<string[]>([]);
@@ -20,7 +20,8 @@ const VisitKanban: React.FC = () => {
     visitTime: '', 
     visitType: '🏢 Presencial', 
     observations: '',
-    status: 'a-agendar' 
+    status: 'a-agendar',
+    projectId: '' 
   });
 
   const columns = [
@@ -73,7 +74,7 @@ const VisitKanban: React.FC = () => {
     setFormData({ 
       title: '', contactName: '', contactRole: '', email: '', 
       state: '', city: '', visitDate: '', visitTime: '', 
-      visitType: '🏢 Presencial', observations: '', status: 'a-agendar' 
+      visitType: '🏢 Presencial', observations: '', status: 'a-agendar', projectId: '' 
     });
   };
 
@@ -90,7 +91,8 @@ const VisitKanban: React.FC = () => {
       visitTime: item.visitTime || '',
       visitType: item.visitType || '🏢 Presencial',
       observations: item.observations || item.description || '',
-      status: item.status
+      status: item.status,
+      projectId: item.projectId || ''
     });
     setIsModalOpen(true);
   };
@@ -121,6 +123,10 @@ const VisitKanban: React.FC = () => {
     cursor: 'pointer'
   };
 
+  const projectNames = React.useMemo(() => {
+    return projects.reduce((acc, p) => ({ ...acc, [p.id]: p.title }), {});
+  }, [projects]);
+
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -128,7 +134,7 @@ const VisitKanban: React.FC = () => {
           <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Pipeline de Visitas</h2>
           <p style={{ color: 'var(--text-muted)' }}>Cronograma comercial de prospecção e relacionamento.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setEditingItem(null); setFormData({ title: '', contactName: '', contactRole: '', email: '', state: '', city: '', visitDate: '', visitTime: '', visitType: '🏢 Presencial', observations: '', status: 'a-agendar' }); setIsModalOpen(true); }}>+ Agendar Visita</button>
+        <button className="btn btn-primary" onClick={() => { setEditingItem(null); setFormData({ title: '', contactName: '', contactRole: '', email: '', state: '', city: '', visitDate: '', visitTime: '', visitType: '🏢 Presencial', observations: '', status: 'a-agendar', projectId: '' }); setIsModalOpen(true); }}>+ Agendar Visita</button>
       </header>
 
       <KanbanBoard 
@@ -137,6 +143,7 @@ const VisitKanban: React.FC = () => {
         onMove={handleMove} 
         onEdit={handleEdit}
         onDelete={removeKanbanItem}
+        projectNames={projectNames}
       />
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingItem ? "Editar Visita/Reunião" : "+ Nova Visita/Reunião"} width="700px">
@@ -285,6 +292,21 @@ const VisitKanban: React.FC = () => {
               <option value="🏢 Presencial" style={{ background: '#1a1a1a' }}>🏢 Presencial</option>
               <option value="📞 Remota/Online" style={{ background: '#1a1a1a' }}>📞 Remota/Online</option>
               <option value="☕ Café/Networking" style={{ background: '#1a1a1a' }}>☕ Café/Networking</option>
+            </select>
+          </div>
+          
+          {/* Vínculo com Projeto */}
+          <div>
+            <label style={labelStyle}>Projeto Vinculado (Opcional)</label>
+            <select 
+              style={customSelectStyle} 
+              value={formData.projectId} 
+              onChange={e => setFormData({ ...formData, projectId: e.target.value })}
+            >
+              <option value="" style={{ background: '#1a1a1a' }}>Nenhum Projeto</option>
+              {projects.map(p => (
+                <option key={p.id} value={p.id} style={{ background: '#1a1a1a' }}>🚀 {p.title} ({p.subtitle})</option>
+              ))}
             </select>
           </div>
 
