@@ -4,7 +4,7 @@ import Modal from '../../components/common/Modal';
 import { useAppContext } from '../../context/AppContext';
 
 const ProjectKanban: React.FC = () => {
-  const { projects, updateKanbanStatus, addKanbanItem, updateKanbanItem } = useAppContext();
+  const { projects, updateKanbanStatus, addKanbanItem, updateKanbanItem, removeKanbanItem } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [cities, setCities] = useState<string[]>([]);
@@ -140,6 +140,7 @@ const ProjectKanban: React.FC = () => {
         columns={columns} 
         onMove={handleMove} 
         onEdit={handleEdit}
+        onDelete={removeKanbanItem}
       />
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingItem ? "Editar Oportunidade" : "Cadastrar Oportunidade"} width="700px">

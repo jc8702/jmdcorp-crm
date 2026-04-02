@@ -43,6 +43,7 @@ export const apiService = {
   addKanbanItem: (data: any) => apiService.fetch('/api/kanban', { method: 'POST', body: JSON.stringify(data) }),
   updateKanbanStatus: (id: string, status: string, extraData: any = {}) => 
     apiService.fetch(`/api/kanban?id=${id}`, { method: 'PATCH', body: JSON.stringify({ status, ...extraData }) }),
+  removeKanbanItem: (id: string) => apiService.fetch(`/api/kanban?id=${id}`, { method: 'DELETE' }),
 
   // Logs
   getLogs: () => apiService.fetch('/api/logs'),

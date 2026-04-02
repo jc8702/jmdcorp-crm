@@ -116,6 +116,7 @@ interface AppContextType {
   yearlyEvolutionData: any[];
   reloadData: () => Promise<void>;
   updateKanbanItem: (id: string, data: Partial<KanbanItem>) => Promise<void>;
+  removeKanbanItem: (id: string) => Promise<void>;
   currentMeta: number;
   totalPeriodo: number;
   addLog: (type: string, message: string, severity: SystemLog['severity']) => void;
@@ -627,13 +628,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setter((prev: KanbanItem[]) => prev.map((i: KanbanItem) => i.id === id ? { ...i, ...data } : i));
   };
 
+  const removeKanbanItem = async (id: string) => {
+    await apiService.removeKanbanItem(id);
+    setProjects((prev: KanbanItem[]) => prev.filter((i: KanbanItem) => i.id !== id));
+    setVisits((prev: KanbanItem[]) => prev.filter((i: KanbanItem) => i.id !== id));
+    addLog('SYSTEM_INFO', `Item do Kanban removido ID: ${id}`, 'WARNING');
+  };
+
   return (
     <AppContext.Provider value={{ 
       taxaFinanceiraPadrao, setTaxaFinanceiraPadrao, 
       metaMensal, setMetaMensal, monthlyGoals, setMonthlyGoal, selectedPeriod, setSelectedPeriod,
       clients, billings, projects, visits, syncQueue, isCircuitOpen,
       systemLogs, isAdmin, setIsAdmin, addLog,
-      addClient, updateClient, removeClient, addBilling, updateBilling, removeBilling, updateKanbanStatus, addKanbanItem, updateKanbanItem, syncToSalesforce,
+      addClient, updateClient, removeClient, addBilling, updateBilling, removeBilling, updateKanbanStatus, addKanbanItem, updateKanbanItem, removeKanbanItem, syncToSalesforce,
       totalFaturadoMes, totalPedidosCarteira, yearlyEvolutionData, currentMeta, totalPeriodo, reloadData
     }}>
       {children}

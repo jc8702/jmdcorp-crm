@@ -56,6 +56,16 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  res.setHeader('Allow', ['GET', 'POST', 'PATCH', 'PUT']);
+  if (req.method === 'DELETE') {
+    const { id } = req.query;
+    try {
+      await sql`DELETE FROM kanban_items WHERE id = ${id}`;
+      return res.status(204).end();
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
+  res.setHeader('Allow', ['GET', 'POST', 'PATCH', 'PUT', 'DELETE']);
   res.status(405).end(`Method ${req.method} Not Allowed`);
 }

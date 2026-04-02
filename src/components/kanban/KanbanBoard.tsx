@@ -17,9 +17,10 @@ interface KanbanBoardProps {
   columns: { id: string; title: string }[];
   onMove: (id: string, newStatus: string) => void;
   onEdit?: (item: KanbanItem) => void;
+  onDelete?: (id: string) => void;
 }
 
-const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdit }) => {
+const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdit, onDelete }) => {
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
   const handleDragStart = (id: string) => {
@@ -84,14 +85,29 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', position: 'relative' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <p style={{ fontSize: '0.875rem', fontWeight: 'bold', flex: 1 }}>{item.title}</p>
-                    {onEdit && (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); onEdit(item); }}
-                        style={{ all: 'unset', cursor: 'pointer', color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.7 }}
-                      >
-                        Editar
-                      </button>
-                    )}
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      {onEdit && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); onEdit(item); }}
+                          style={{ all: 'unset', cursor: 'pointer', color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.7 }}
+                        >
+                          Editar
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            if (window.confirm('Tem certeza que deseja excluir este item?')) {
+                              onDelete(item.id);
+                            }
+                          }}
+                          style={{ all: 'unset', cursor: 'pointer', color: '#ef4444', fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.7 }}
+                        >
+                          Excluir
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {item.subtitle && <p style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{item.subtitle}</p>}
                   

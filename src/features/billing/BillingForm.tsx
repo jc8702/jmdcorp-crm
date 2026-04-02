@@ -295,9 +295,21 @@ const BillingModule: React.FC = () => {
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
              <label style={{ fontSize: '0.875rem', fontWeight: '600' }}>Cliente</label>
-             <select className="input" required value={formData.cliente} onChange={e => setFormData({ ...formData, cliente: e.target.value })}>
+             <select 
+               className="input" 
+               required 
+               value={formData.cliente} 
+               onChange={e => {
+                 const selectedClient = clients.find(c => c.razaoSocial === e.target.value);
+                 setFormData({ 
+                   ...formData, 
+                   cliente: e.target.value,
+                   erp: selectedClient?.codigoErp || ''
+                 });
+               }}
+             >
                 <option value="">Selecione um cliente...</option>
-                {clients.map(c => <option key={c.id} value={c.razaoSocial}>{c.razaoSocial}</option>)}
+                {clients.map(c => <option key={c.id} value={c.razaoSocial}>{c.razaoSocial} {c.codigoErp ? `(${c.codigoErp})` : ''}</option>)}
              </select>
           </div>
 
