@@ -4,11 +4,13 @@ import Modal from '../../components/common/Modal';
 import { useAppContext } from '../../context/AppContext';
 
 const VisitKanban: React.FC = () => {
-  const { visits, updateKanbanStatus, addKanbanItem, updateKanbanItem, removeKanbanItem, projects } = useAppContext();
+  const { visits, updateKanbanStatus, addKanbanItem, updateKanbanItem, removeKanbanItem, projects, clients } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [cities, setCities] = useState<string[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
+  const [clientSuggestions, setClientSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [formData, setFormData] = useState({ 
     title: '', 
     contactName: '', 
@@ -21,7 +23,8 @@ const VisitKanban: React.FC = () => {
     visitType: '🏢 Presencial', 
     observations: '',
     status: 'a-agendar',
-    projectId: '' 
+    projectId: '',
+    label: ''
   });
 
   const columns = [
@@ -74,8 +77,35 @@ const VisitKanban: React.FC = () => {
     setFormData({ 
       title: '', contactName: '', contactRole: '', email: '', 
       state: '', city: '', visitDate: '', visitTime: '', 
-      visitType: '🏢 Presencial', observations: '', status: 'a-agendar', projectId: '' 
+      visitType: '🏢 Presencial', observations: '', status: 'a-agendar', projectId: '', label: '' 
     });
+  };
+
+  const handleClientSearch = (value: string) => {
+    setFormData({ ...formData, title: value });
+    if (value.length > 1) {
+      const filtered = clients.filter(c => 
+        c.razaoSocial.toLowerCase().includes(value.toLowerCase()) || 
+        c.codigoErp?.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 5);
+      setClientSuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const applyClientData = (client: any) => {
+    setFormData({
+      ...formData,
+      title: client.razaoSocial,
+      contactName: client.contactName || formData.contactName,
+      email: client.email || formData.email,
+      state: client.uf || formData.state,
+      city: client.municipio || formData.city,
+      label: client.codigoErp ? `ERP: ${client.codigoErp}` : formData.label
+    });
+    setShowSuggestions(false);
   };
 
   const handleEdit = (item: any) => {
@@ -92,7 +122,8 @@ const VisitKanban: React.FC = () => {
       visitType: item.visitType || '🏢 Presencial',
       observations: item.observations || item.description || '',
       status: item.status,
-      projectId: item.projectId || ''
+      projectId: item.projectId || '',
+      label: item.label || ''
     });
     setIsModalOpen(true);
   };
@@ -134,7 +165,7 @@ const VisitKanban: React.FC = () => {
           <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Pipeline de Visitas</h2>
           <p style={{ color: 'var(--text-muted)' }}>Cronograma comercial de prospecção e relacionamento.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setEditingItem(null); setFormData({ title: '', contactName: '', contactRole: '', email: '', state: '', city: '', visitDate: '', visitTime: '', visitType: '🏢 Presencial', observations: '', status: 'a-agendar', projectId: '' }); setIsModalOpen(true); }}>+ Agendar Visita</button>
+        <button className="btn btn-primary" onClick={() => { setEditingItem(null); setFormData({ title: '', contactName: '', contactRole: '', email: '', state: '', city: '', visitDate: '', visitTime: '', visitType: '🏢 Presencial', observations: '', status: 'a-agendar', projectId: '', label: '' }); setIsModalOpen(true); }}>+ Agendar Visita</button>
       </header>
 
       <KanbanBoard 
@@ -151,15 +182,53 @@ const VisitKanban: React.FC = () => {
           
           {/* Linha 1 */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-            <div>
+            <div style={{ position: 'relative' }}>
               <label style={labelStyle}>Cliente/Empresa</label>
               <input 
                 style={inputStyle} 
                 placeholder="Nome do cliente" 
                 required 
                 value={formData.title} 
-                onChange={e => setFormData({ ...formData, title: e.target.value })} 
+                onChange={e => handleClientSearch(e.target.value)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               />
+              {showSuggestions && clientSuggestions.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  zIndex: 1000,
+                  background: '#1a1a1a',
+                  border: '1px solid var(--primary)',
+                  borderRadius: '8px',
+                  marginTop: '0.25rem',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+                }}>
+                  {clientSuggestions.map(c => (
+                    <div 
+                      key={c.id} 
+                      onClick={() => applyClientData(c)}
+                      style={{
+                        padding: '0.75rem',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid rgba(255,255,255,0.05)',
+                        fontSize: '0.85rem',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(52, 115, 255, 0.1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <span>{c.razaoSocial}</span>
+                      {c.codigoErp && <span style={{ color: 'var(--primary)', fontSize: '0.7rem' }}>ERP: {c.codigoErp}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div>
               <label style={labelStyle}>Nome do Contato</label>

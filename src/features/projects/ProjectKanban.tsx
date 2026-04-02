@@ -4,11 +4,13 @@ import Modal from '../../components/common/Modal';
 import { useAppContext } from '../../context/AppContext';
 
 const ProjectKanban: React.FC = () => {
-  const { projects, updateKanbanStatus, addKanbanItem, updateKanbanItem, removeKanbanItem } = useAppContext();
+  const { projects, updateKanbanStatus, addKanbanItem, updateKanbanItem, removeKanbanItem, clients } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [cities, setCities] = useState<string[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
+  const [clientSuggestions, setClientSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [formData, setFormData] = useState({ 
     title: '', 
     subtitle: '', 
@@ -21,6 +23,7 @@ const ProjectKanban: React.FC = () => {
     value: '', 
     temperature: '❄️ Frio',
     description: '',
+    label: '',
     status: 'novo' 
   });
 
@@ -76,8 +79,36 @@ const ProjectKanban: React.FC = () => {
     setFormData({ 
       title: '', subtitle: '', contactName: '', contactRole: '', 
       email: '', phone: '', city: '', state: '', value: '', 
-      temperature: '❄️ Frio', description: '', status: 'novo' 
+      temperature: '❄️ Frio', description: '', label: '', status: 'novo' 
     });
+  };
+  
+  const handleClientSearch = (value: string) => {
+    setFormData({ ...formData, subtitle: value });
+    if (value.length > 1) {
+      const filtered = clients.filter(c => 
+        c.razaoSocial.toLowerCase().includes(value.toLowerCase()) || 
+        c.codigoErp?.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 5);
+      setClientSuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const applyClientData = (client: any) => {
+    setFormData({
+      ...formData,
+      subtitle: client.razaoSocial,
+      contactName: client.contactName || formData.contactName, // Fallback if already typed
+      email: client.email || formData.email,
+      phone: client.telefone || formData.phone,
+      state: client.uf || formData.state,
+      city: client.municipio || formData.city,
+      label: client.codigoErp ? `ERP: ${client.codigoErp}` : formData.label
+    });
+    setShowSuggestions(false);
   };
 
   const handleEdit = (item: any) => {
@@ -94,6 +125,7 @@ const ProjectKanban: React.FC = () => {
       value: item.value?.toString() || '',
       temperature: item.temperature || '❄️ Frio',
       description: item.description || '',
+      label: item.label || '',
       status: item.status
     });
     setIsModalOpen(true);
@@ -132,7 +164,7 @@ const ProjectKanban: React.FC = () => {
           <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Gestão de Projetos</h2>
           <p style={{ color: 'var(--text-muted)' }}>Mapeamento de implementações técnicas.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setEditingItem(null); setFormData({ title: '', subtitle: '', contactName: '', contactRole: '', email: '', phone: '', city: '', state: '', value: '', temperature: '❄️ Frio', description: '', status: 'novo' }); setIsModalOpen(true); }}>+ Novo Projeto</button>
+        <button className="btn btn-primary" onClick={() => { setEditingItem(null); setFormData({ title: '', subtitle: '', contactName: '', contactRole: '', email: '', phone: '', city: '', state: '', value: '', temperature: '❄️ Frio', description: '', label: '', status: 'novo' }); setIsModalOpen(true); }}>+ Novo Projeto</button>
       </header>
 
       <KanbanBoard 
@@ -158,15 +190,53 @@ const ProjectKanban: React.FC = () => {
                 onChange={e => setFormData({ ...formData, title: e.target.value })} 
               />
             </div>
-            <div>
+            <div style={{ position: 'relative' }}>
               <label style={labelStyle}>Cliente/Empresa (Novo ou Existente)</label>
               <input 
                 style={inputStyle} 
                 placeholder="Ex: ABC Corp" 
                 required 
                 value={formData.subtitle} 
-                onChange={e => setFormData({ ...formData, subtitle: e.target.value })} 
+                onChange={e => handleClientSearch(e.target.value)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               />
+              {showSuggestions && clientSuggestions.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  zIndex: 1000,
+                  background: '#1a1a1a',
+                  border: '1px solid var(--primary)',
+                  borderRadius: '8px',
+                  marginTop: '0.25rem',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+                }}>
+                  {clientSuggestions.map(c => (
+                    <div 
+                      key={c.id} 
+                      onClick={() => applyClientData(c)}
+                      style={{
+                        padding: '0.75rem',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid rgba(255,255,255,0.05)',
+                        fontSize: '0.85rem',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(52, 115, 255, 0.1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <span>{c.razaoSocial}</span>
+                      {c.codigoErp && <span style={{ color: 'var(--primary)', fontSize: '0.7rem' }}>ERP: {c.codigoErp}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

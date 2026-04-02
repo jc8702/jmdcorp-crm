@@ -74,28 +74,25 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                 key={item.id}
                 draggable
                 onDragStart={() => handleDragStart(item.id)}
+                onClick={() => onEdit?.(item)}
                 className="card"
                 style={{ 
-                  cursor: 'grab', 
+                  cursor: 'pointer', 
                   padding: '1rem', 
                   background: 'var(--surface)',
                   border: '1px solid var(--border)',
                   userSelect: 'none',
-                  opacity: draggedId === item.id ? 0.4 : 1
+                  opacity: draggedId === item.id ? 0.4 : 1,
+                  transition: 'all 0.2s ease',
+                  position: 'relative'
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.boxShadow = '0 0 15px rgba(52, 115, 255, 0.2)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none'; }}
               >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', position: 'relative' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <p style={{ fontSize: '0.875rem', fontWeight: 'bold', flex: 1 }}>{item.title}</p>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      {onEdit && (
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); onEdit(item); }}
-                          style={{ all: 'unset', cursor: 'pointer', color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.7 }}
-                        >
-                          Editar
-                        </button>
-                      )}
                       {onDelete && (
                         <button 
                           onClick={(e) => { 
