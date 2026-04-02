@@ -1,6 +1,6 @@
-import { sql } from './api/lib/_db';
 import dotenv from 'dotenv';
 dotenv.config();
+import { sql } from './api/lib/_db';
 
 async function migrate() {
   console.log('Iniciando migração...');
