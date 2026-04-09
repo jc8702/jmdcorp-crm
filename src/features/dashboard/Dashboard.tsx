@@ -14,6 +14,68 @@ const Dashboard: React.FC = () => {
 
   const percentualMeta = currentMeta > 0 ? Math.min(Math.round((totalPeriodo / currentMeta) * 100), 100) : 0;
 
+  // Pro-rata Meta Logic (Business Days)
+  const getProRataMeta = React.useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // 1-12
+
+    const getBusinessDaysInPeriod = (year: number, month: number) => {
+      const start = new Date(year, month - 1, 1);
+      const end = new Date(year, month, 0);
+      let count = 0;
+      const cur = new Date(start);
+      while (cur <= end) {
+        if (cur.getDay() !== 0 && cur.getDay() !== 6) count++;
+        cur.setDate(cur.getDate() + 1);
+      }
+      return count;
+    };
+
+    const getBusinessDaysPassed = (year: number, month: number) => {
+      const start = new Date(year, month - 1, 1);
+      const today = new Date();
+      
+      // If selected month is in the past
+      if (year < currentYear || (year === currentYear && month < currentMonth)) {
+        return getBusinessDaysInPeriod(year, month);
+      }
+      // If selected month is in the future
+      if (year > currentYear || (year === currentYear && month > currentMonth)) {
+        return 0;
+      }
+      
+      // Current month
+      let count = 0;
+      const cur = new Date(start);
+      while (cur <= today && cur.getMonth() + 1 === month) {
+        if (cur.getDay() !== 0 && cur.getDay() !== 6) count++;
+        cur.setDate(cur.getDate() + 1);
+      }
+      return count;
+    };
+
+    let totalDays = 0;
+    let passedDays = 0;
+
+    if (selectedPeriod === 'Annual') {
+      for (let m = 1; m <= 12; m++) {
+        totalDays += getBusinessDaysInPeriod(currentYear, m);
+        passedDays += getBusinessDaysPassed(currentYear, m);
+      }
+    } else {
+      const [y, m] = selectedPeriod.split('-').map(Number);
+      totalDays = getBusinessDaysInPeriod(y, m);
+      passedDays = getBusinessDaysPassed(y, m);
+    }
+
+    const expectedPerc = totalDays > 0 ? Math.round((passedDays / totalDays) * 100) : 0;
+    const expectedValue = currentMeta * (passedDays / totalDays);
+    const gap = totalPeriodo - expectedValue;
+
+    return { expectedPerc, expectedValue, gap };
+  }, [selectedPeriod, currentMeta, totalPeriodo]);
+
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   const formatDate = (dateStr: string) => {
@@ -110,11 +172,29 @@ const Dashboard: React.FC = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: '1.5rem' }}>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <h3 style={{ fontSize: '1.125rem', marginBottom: '1.5rem' }}>Meta do Período ({selectedPeriod === 'Annual' ? 'Ano' : 'Real'})</h3>
+          <h3 style={{ fontSize: '1.125rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            Meta do Período ({selectedPeriod === 'Annual' ? 'Ano' : 'Real'})
+          </h3>
           <Gauge value={percentualMeta} label="Atingido" sublabel={`Objetivo: ${formatCurrency(currentMeta)}`} />
-          <p style={{ fontSize: '0.875rem', marginTop: '1rem', color: 'var(--text-muted)' }}>
-            Faturamento: <b>{formatCurrency(totalPeriodo)}</b>
-          </p>
+          
+          <div style={{ marginTop: '1.5rem', width: '100%', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Ideal para hoje (Andamento):</span>
+              <span style={{ fontWeight: 'bold' }}>{getProRataMeta.expectedPerc}%</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', fontWeight: 'bold' }}>
+              <span>{formatCurrency(getProRataMeta.expectedValue)}</span>
+              <span style={{ color: getProRataMeta.gap >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                {getProRataMeta.gap >= 0 ? '↑ ' : '↓ '}
+                {formatCurrency(Math.abs(getProRataMeta.gap))}
+              </span>
+            </div>
+            
+            <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border)', paddingTop: '0.5rem' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Faturamento Real:</p>
+              <p style={{ fontSize: '1.125rem', fontWeight: 'bold' }}>{formatCurrency(totalPeriodo)}</p>
+            </div>
+          </div>
         </div>
 
         <div className="card">
