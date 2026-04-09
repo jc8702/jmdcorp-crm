@@ -84,12 +84,13 @@ const BillingModule: React.FC = () => {
   };
 
   const handleEdit = (b: Billing) => {
+    const clientRecord = clients.find(c => c.razaoSocial === b.cliente);
     setEditingBilling(b);
     setFormData({
       nf: b.nf,
       pedido: b.pedido,
       cliente: b.cliente,
-      erp: b.erp,
+      erp: b.erp || clientRecord?.codigoErp || '',
       valor: b.valor.toString(),
       data: new Date(b.data).toISOString().split('T')[0],
       status: b.status
@@ -326,7 +327,13 @@ const BillingModule: React.FC = () => {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
              <label style={{ fontSize: '0.875rem', fontWeight: '600' }}>Código ERP</label>
-             <input className="input" placeholder="Opcional" value={formData.erp} onChange={e => setFormData({ ...formData, erp: e.target.value })} />
+             <input 
+               className="input" 
+               placeholder="Preenchido automaticamente pelo cliente" 
+               required 
+               value={formData.erp} 
+               onChange={e => setFormData({ ...formData, erp: e.target.value })} 
+             />
           </div>
 
 
