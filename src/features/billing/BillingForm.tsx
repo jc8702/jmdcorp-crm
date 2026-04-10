@@ -428,14 +428,43 @@ const BillingModule: React.FC = () => {
          <DataTable 
              headers={['Nome Cliente', 'Última Compra', 'Previsão de Compra \u25BE', 'Valor Médio do Pedido']}
              data={purchasingForecasts.slice(0, 20)}
-             renderRow={(f: any) => (
+             renderRow={(f: any) => {
+                 const now = new Date();
+                 const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                 const clientBillings = billings.filter((b: any) => b.cliente === f.name && b.data.startsWith(currentMonthKey));
+                 
+                 let dotColor = '#ef4444'; // Vermelho
+                 let statusTitle = 'Não comprou ainda dentro do mês';
+                 
+                 if (clientBillings.some((b: any) => b.status === 'FATURADO')) {
+                   dotColor = '#10b981'; // Verde
+                   statusTitle = 'Comprou (Faturado)';
+                 } else if (clientBillings.some((b: any) => b.status === 'PENDENTE')) {
+                   dotColor = '#f59e0b'; // Amarelo
+                   statusTitle = 'Comprou mas não faturou (Pendente)';
+                 }
+
+                 return (
                  <>
-                    <td style={{ padding: '1rem', fontSize: '0.875rem' }}>{f.name}</td>
+                    <td style={{ padding: '1rem', fontSize: '0.875rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div 
+                          title={statusTitle}
+                          style={{ 
+                            minWidth: '10px', height: '10px', borderRadius: '50%', 
+                            backgroundColor: dotColor, 
+                            boxShadow: `0 0 6px ${dotColor}aa`,
+                            cursor: 'help'
+                          }} 
+                        />
+                        {f.name}
+                      </div>
+                    </td>
                     <td style={{ padding: '1rem', fontSize: '0.875rem' }}>{f.lastPurchase.toLocaleDateString('pt-BR')}</td>
                     <td style={{ padding: '1rem', fontSize: '0.875rem', fontWeight: 'bold', color: 'var(--primary)' }}>{f.nextPurchase.toLocaleDateString('pt-BR')}</td>
                     <td style={{ padding: '1rem', fontSize: '0.875rem', fontWeight: 'bold' }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(f.avgValue)}</td>
                  </>
-             )}
+             )}}
          />
       </div>
     </div>
