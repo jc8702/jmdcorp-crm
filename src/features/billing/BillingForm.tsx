@@ -421,7 +421,7 @@ const BillingModule: React.FC = () => {
       </Modal>
 
       <div className="card glass" style={{ marginTop: '2rem' }}>
-         <h3 style={{ fontSize: '1.125rem', marginBottom: '1.25rem' }}>Previsão de Compra por Cliente (Baseada no Histórico)</h3>
+         <h3 style={{ fontSize: '1.125rem', marginBottom: '1.25rem' }}>Previsão de Compra por Cliente (Filtrado em: {selectedMonth === 'Annual' ? 'Ano Atual' : selectedMonth})</h3>
          <DataTable 
              headers={['Nome Cliente', 'Última Compra', 'Previsão de Compra \u25BE', 'Valor Médio do Pedido']}
              data={purchasingForecasts.slice(0, 20)}
