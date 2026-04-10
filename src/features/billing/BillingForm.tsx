@@ -20,7 +20,10 @@ const BillingModule: React.FC = () => {
     const grouped = billings.reduce((acc, current) => {
        if (current.status !== 'FATURADO') return acc;
        
-       const time = new Date(current.data + 'T12:00:00Z').getTime();
+       let dateStr = current.data;
+       if (!dateStr.includes('T')) dateStr += 'T12:00:00Z';
+       
+       const time = new Date(dateStr).getTime();
        if (isNaN(time)) return acc;
 
        if (!acc[current.cliente]) {
