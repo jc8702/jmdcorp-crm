@@ -19,16 +19,25 @@ const BillingModule: React.FC = () => {
   const purchasingForecasts = React.useMemo(() => {
     const grouped = billings.reduce((acc, current) => {
        if (current.status !== 'FATURADO') return acc;
+       
+       const time = new Date(current.data + 'T12:00:00Z').getTime();
+       if (isNaN(time)) return acc;
+
        if (!acc[current.cliente]) {
            acc[current.cliente] = { name: current.cliente, dates: [], totalValue: 0, count: 0 };
        }
-       acc[current.cliente].dates.push(new Date(current.data + 'T12:00:00Z').getTime());
+       acc[current.cliente].dates.push(time);
        acc[current.cliente].totalValue += current.valor;
        acc[current.cliente].count += 1;
        return acc;
     }, {} as Record<string, any>);
 
-    return Object.values(grouped).map((clientData: any) => {
+    const projections: any[] = [];
+    const targetPrefix = selectedMonth === 'Annual' ? new Date().getFullYear().toString() : selectedMonth;
+    const maxYears = new Date().getFullYear() + 5;
+
+    Object.values(grouped).forEach((clientData: any) => {
+       if (clientData.dates.length === 0) return;
        const sortedDates = clientData.dates.sort((a: number, b: number) => a - b);
        const latestDate = sortedDates[sortedDates.length - 1];
        
@@ -40,17 +49,41 @@ const BillingModule: React.FC = () => {
            }
            averageDays = totalDiff / (sortedDates.length - 1) / (1000 * 60 * 60 * 24);
        }
+       if (averageDays < 1 || isNaN(averageDays)) averageDays = 30;
+       
+       let nextPurchaseTime = latestDate + averageDays * 24 * 60 * 60 * 1000;
+       
+       while (new Date(nextPurchaseTime).getFullYear() <= maxYears) {
+         const projectedDate = new Date(nextPurchaseTime);
+         const pMonth = String(projectedDate.getMonth() + 1).padStart(2, '0');
+         const pYear = projectedDate.getFullYear();
+         const monthKey = `${pYear}-${pMonth}`;
+         
+         const isMatch = selectedMonth === 'Annual' ? String(pYear) === targetPrefix : monthKey === targetPrefix;
+         
+         if (isMatch) {
+            projections.push({
+              name: clientData.name,
+              lastPurchase: new Date(latestDate),
+              nextPurchase: projectedDate,
+              avgValue: clientData.totalValue / clientData.count
+            });
+            break;
+         }
+         
+         if (selectedMonth !== 'Annual') {
+           const [sYear, sMonth] = targetPrefix.split('-').map(Number);
+           if (pYear > sYear || (pYear === sYear && (projectedDate.getMonth() + 1) > sMonth)) {
+             break;
+           }
+         }
+         
+         nextPurchaseTime += averageDays * 24 * 60 * 60 * 1000;
+       }
+    });
 
-       const nextPurchaseDate = new Date(latestDate + averageDays * 24 * 60 * 60 * 1000);
-
-       return {
-          name: clientData.name,
-          lastPurchase: new Date(latestDate),
-          nextPurchase: nextPurchaseDate,
-          avgValue: clientData.totalValue / clientData.count
-       };
-    }).sort((a, b) => a.nextPurchase.getTime() - b.nextPurchase.getTime());
-  }, [billings]);
+    return projections.sort((a, b) => a.nextPurchase.getTime() - b.nextPurchase.getTime());
+  }, [billings, selectedMonth]);
 
   const periods = [
     { id: 'Annual', label: 'Visão Anual (2026)' },
