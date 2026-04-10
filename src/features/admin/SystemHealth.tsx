@@ -53,7 +53,7 @@ const SystemHealth: React.FC = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
          <div className="card glass" style={{ borderTop: `4px solid ${isCircuitOpen ? 'var(--danger)' : 'var(--success)'}` }}>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Estado do Salesforce API</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Estado da API Principal</p>
             <h4 style={{ fontSize: '1.25rem', color: isCircuitOpen ? 'var(--danger)' : 'var(--success)' }}>
                {isCircuitOpen ? '🔴 CIRCUIT OPEN' : '🟢 CIRCUIT CLOSED'}
             </h4>

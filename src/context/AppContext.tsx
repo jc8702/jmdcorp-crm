@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react';
-import { salesforceService } from '../services/salesforceService';
 import { apiService, hasAppPin } from '../services/apiService';
 
 export type Client = {
@@ -111,7 +110,6 @@ interface AppContextType {
   removeBilling: (id: string) => Promise<void>;
   updateKanbanStatus: (type: 'project' | 'visit', id: string, newStatus: string) => Promise<void>;
   addKanbanItem: (item: Omit<KanbanItem, 'id'>) => Promise<void>;
-  syncToSalesforce: (data: any) => Promise<{ success: boolean; message: string; degraded?: boolean }>;
   totalFaturadoMes: number;
   totalPedidosCarteira: number;
   yearlyEvolutionData: any[];
@@ -327,26 +325,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         type, message, severity,
         timestamp: new Date().toLocaleTimeString()
       }, ...prev].slice(0, 50));
-    }
-  };
-
-  const syncToSalesforce = async (data: any) => {
-    try {
-      const result = await salesforceService.openCase(data);
-      const status = salesforceService.getCircuitStatus();
-      setIsCircuitOpen(status.state === 'OPEN');
-
-      if (!result.success && result.queued) {
-        addLog(status.state === 'OPEN' ? 'API_FAIL' : 'API_RETRY', result.message, 'WARNING');
-        setSyncQueue((prev: OfflineSync[]) => [{ id: Math.random().toString(36).substr(2, 9), data, timestamp: new Date().toISOString(), status: 'PENDING' }, ...prev]);
-        return { ...result, degraded: true };
-      }
-      
-      if (result.success) addLog('SYSTEM_INFO', 'Sincronização realizada com Salesforce.', 'INFO');
-      return result;
-    } catch (error: any) {
-      addLog('API_FAIL', error.message, 'CRITICAL');
-      return { success: false, message: error.message };
     }
   };
 
@@ -645,7 +623,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       metaMensal, setMetaMensal, monthlyGoals, setMonthlyGoal, selectedPeriod, setSelectedPeriod,
       clients, billings, projects, visits, syncQueue, isCircuitOpen,
       systemLogs, isAdmin, setIsAdmin, addLog,
-      addClient, updateClient, removeClient, addBilling, updateBilling, removeBilling, updateKanbanStatus, addKanbanItem, updateKanbanItem, removeKanbanItem, syncToSalesforce,
+      addClient, updateClient, removeClient, addBilling, updateBilling, removeBilling, updateKanbanStatus, addKanbanItem, updateKanbanItem, removeKanbanItem,
       totalFaturadoMes, totalPedidosCarteira, yearlyEvolutionData, currentMeta, totalPeriodo, reloadData
     }}>
       {children}

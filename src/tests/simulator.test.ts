@@ -33,7 +33,7 @@ export const runDiagnostics = () => {
         status: calc2 === 103 ? 'PASS' : 'FAIL'
     });
 
-    // Property-Based Simulation: 50 random checks for Salesforce Lock
+    // Property-Based Simulation: 50 random checks for External API Lock
     let sfLockBreach = 0;
     for(let i=0; i<50; i++) {
         const prod = INITIAL_PRODUCTS[0]; // MUELLER
@@ -44,7 +44,7 @@ export const runDiagnostics = () => {
     }
     
     results.push({
-        test: 'Property-Based: Bloqueio Salesforce (50 iterações)',
+        test: 'Property-Based: Bloqueio Integração Externa (50 iterações)',
         expected: '0 Breaches',
         actual: `${sfLockBreach} Breaches`,
         status: sfLockBreach === 0 ? 'PASS' : 'FAIL'
