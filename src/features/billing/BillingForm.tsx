@@ -16,6 +16,42 @@ const BillingModule: React.FC = () => {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
 
+  const purchasingForecasts = React.useMemo(() => {
+    const grouped = billings.reduce((acc, current) => {
+       if (current.status !== 'FATURADO') return acc;
+       if (!acc[current.cliente]) {
+           acc[current.cliente] = { name: current.cliente, dates: [], totalValue: 0, count: 0 };
+       }
+       acc[current.cliente].dates.push(new Date(current.data + 'T12:00:00Z').getTime());
+       acc[current.cliente].totalValue += current.valor;
+       acc[current.cliente].count += 1;
+       return acc;
+    }, {} as Record<string, any>);
+
+    return Object.values(grouped).map((clientData: any) => {
+       const sortedDates = clientData.dates.sort((a: number, b: number) => a - b);
+       const latestDate = sortedDates[sortedDates.length - 1];
+       
+       let averageDays = 30; // default for 1 purchase
+       if (sortedDates.length > 1) {
+           let totalDiff = 0;
+           for (let i = 1; i < sortedDates.length; i++) {
+               totalDiff += (sortedDates[i] - sortedDates[i-1]);
+           }
+           averageDays = totalDiff / (sortedDates.length - 1) / (1000 * 60 * 60 * 24);
+       }
+
+       const nextPurchaseDate = new Date(latestDate + averageDays * 24 * 60 * 60 * 1000);
+
+       return {
+          name: clientData.name,
+          lastPurchase: new Date(latestDate),
+          nextPurchase: nextPurchaseDate,
+          avgValue: clientData.totalValue / clientData.count
+       };
+    }).sort((a, b) => a.nextPurchase.getTime() - b.nextPurchase.getTime());
+  }, [billings]);
+
   const periods = [
     { id: 'Annual', label: 'Visão Anual (2026)' },
     { id: '2026-01', label: 'Janeiro 2026' },
@@ -149,7 +185,7 @@ const BillingModule: React.FC = () => {
       <td style={{ padding: '1rem', fontSize: '0.875rem' }}>{b.nf}</td>
       <td style={{ padding: '1rem', fontSize: '0.875rem' }}>{b.pedido}</td>
       <td style={{ padding: '1rem', fontSize: '0.875rem' }}>{b.cliente}</td>
-      <td style={{ padding: '1rem', fontSize: '0.875rem', color: 'var(--primary)' }}>{b.erp || '-'}</td>
+      <td style={{ padding: '1rem', fontSize: '0.875rem', color: 'var(--primary)' }}>{b.erp || clients.find(c => c.razaoSocial === b.cliente)?.codigoErp || '-'}</td>
       <td style={{ padding: '1rem', fontWeight: 'bold' }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(b.valor)}</td>
       <td style={{ padding: '1rem' }}>
          <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -302,6 +338,14 @@ const BillingModule: React.FC = () => {
                value={formData.cliente} 
                onChange={e => {
                  const selectedClient = clients.find(c => c.razaoSocial === e.target.value);
+                 
+                 if (selectedClient && !selectedClient.codigoErp) {
+                   alert('Cliente Não Cadastrado! O cliente selecionado não possui um Código ERP vinculado. Cadastre o cliente primeiro.');
+                   setIsModalOpen(false);
+                   setFormData({ ...formData, cliente: '', erp: '' });
+                   return;
+                 }
+
                  setFormData({ 
                    ...formData, 
                    cliente: e.target.value,
@@ -329,10 +373,10 @@ const BillingModule: React.FC = () => {
              <label style={{ fontSize: '0.875rem', fontWeight: '600' }}>Código ERP</label>
              <input 
                className="input" 
-               placeholder="Preenchido automaticamente pelo cliente" 
-               required 
+               placeholder="Preenchido automaticamente ao selecionar cliente" 
+               readOnly={true}
+               style={{ opacity: 0.6, cursor: 'not-allowed', backgroundColor: 'var(--background)' }}
                value={formData.erp} 
-               onChange={e => setFormData({ ...formData, erp: e.target.value })} 
              />
           </div>
 
@@ -343,9 +387,20 @@ const BillingModule: React.FC = () => {
         </form>
       </Modal>
 
-      <div className="card glass">
-         <h4 style={{ fontSize: '0.875rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>Integração ERP (Simulado)</h4>
-         <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Os faturamentos manuais lançados aqui impactam diretamente o Dashboard em tempo real.</p>
+      <div className="card glass" style={{ marginTop: '2rem' }}>
+         <h3 style={{ fontSize: '1.125rem', marginBottom: '1.25rem' }}>Previsão de Compra por Cliente (Baseada no Histórico)</h3>
+         <DataTable 
+             headers={['Nome Cliente', 'Última Compra', 'Previsão de Compra \u25BE', 'Valor Médio do Pedido']}
+             data={purchasingForecasts.slice(0, 20)}
+             renderRow={(f: any) => (
+                 <>
+                    <td style={{ padding: '1rem', fontSize: '0.875rem' }}>{f.name}</td>
+                    <td style={{ padding: '1rem', fontSize: '0.875rem' }}>{f.lastPurchase.toLocaleDateString('pt-BR')}</td>
+                    <td style={{ padding: '1rem', fontSize: '0.875rem', fontWeight: 'bold', color: 'var(--primary)' }}>{f.nextPurchase.toLocaleDateString('pt-BR')}</td>
+                    <td style={{ padding: '1rem', fontSize: '0.875rem', fontWeight: 'bold' }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(f.avgValue)}</td>
+                 </>
+             )}
+         />
       </div>
     </div>
   );

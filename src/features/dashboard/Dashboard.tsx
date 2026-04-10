@@ -7,7 +7,7 @@ import { useAppContext } from '../../context/AppContext';
 import type { Billing } from '../../context/AppContext';
 
 const Dashboard: React.FC = () => {
-  const { billings, totalPeriodo, totalPedidosCarteira, yearlyEvolutionData, currentMeta, selectedPeriod, setSelectedPeriod } = useAppContext();
+  const { billings, clients, totalPeriodo, totalPedidosCarteira, yearlyEvolutionData, currentMeta, selectedPeriod, setSelectedPeriod } = useAppContext();
   const [recentPage, setRecentPage] = React.useState(1);
   const [drilldownModal, setDrilldownModal] = React.useState<{ open: boolean; title: string; clients: any[] }>({ open: false, title: '', clients: [] });
   const recentItemsPerPage = 5;
@@ -144,7 +144,7 @@ const Dashboard: React.FC = () => {
       <td style={{ padding: '1rem' }}>{b.nf}</td>
       <td style={{ padding: '1rem' }}>{b.pedido}</td>
       <td style={{ padding: '1rem' }}>{b.cliente}</td>
-      <td style={{ padding: '1rem' }}>{b.erp}</td>
+      <td style={{ padding: '1rem', color: 'var(--primary)' }}>{b.erp || clients.find((c: any) => c.razaoSocial === b.cliente)?.codigoErp || '-'}</td>
       <td style={{ padding: '1rem', fontWeight: 'bold' }}>{formatCurrency(b.valor)}</td>
       <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{formatDate(b.data)}</td>
     </>
@@ -177,23 +177,44 @@ const Dashboard: React.FC = () => {
           </h3>
           <Gauge value={percentualMeta} label="Atingido" sublabel={`Objetivo: ${formatCurrency(currentMeta)}`} />
           
-          <div style={{ marginTop: '1.5rem', width: '100%', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Ideal para hoje (Andamento):</span>
-              <span style={{ fontWeight: 'bold' }}>{getProRataMeta.expectedPerc}%</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', fontWeight: 'bold' }}>
-              <span>{formatCurrency(getProRataMeta.expectedValue)}</span>
-              <span style={{ color: getProRataMeta.gap >= 0 ? 'var(--success)' : 'var(--danger)' }}>
-                {getProRataMeta.gap >= 0 ? '↑ ' : '↓ '}
-                {formatCurrency(Math.abs(getProRataMeta.gap))}
-              </span>
-            </div>
+          <div style={{ marginTop: '2rem', width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             
-            <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border)', paddingTop: '0.5rem' }}>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Faturamento Real:</p>
-              <p style={{ fontSize: '1.125rem', fontWeight: 'bold' }}>{formatCurrency(totalPeriodo)}</p>
+            {/* Linha 1: Transcorrido vs Atingido */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+               <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', textAlign: 'center' }}>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>% Útil Transcorrida do Mês</p>
+                  <p style={{ fontSize: '1.75rem', fontWeight: 'bold' }}>{getProRataMeta.expectedPerc}%</p>
+               </div>
+               
+               <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', textAlign: 'center' }}>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>% Atingido (% do Total)</p>
+                  <p style={{ fontSize: '1.75rem', fontWeight: 'bold', color: percentualMeta >= getProRataMeta.expectedPerc ? 'var(--success)' : 'var(--warning)' }}>
+                    {percentualMeta}%
+                  </p>
+               </div>
             </div>
+
+            {/* Linha 2: Faturamento Realizado vs Projeção */}
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem', alignItems: 'center' }}>
+                  <p style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>Realizado (Total)</p>
+                  <p style={{ fontSize: '2.25rem', fontWeight: 'bold', color: 'white' }}>{formatCurrency(totalPeriodo)}</p>
+               </div>
+
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div>
+                     <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Deveria estar em ({getProRataMeta.expectedPerc}%)</p>
+                     <p style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>{formatCurrency(getProRataMeta.expectedValue)}</p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                     <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Variação de Projeção</p>
+                     <p style={{ fontSize: '1.125rem', fontWeight: 'bold', color: getProRataMeta.gap >= 0 ? 'var(--success)' : 'var(--warning)' }}>
+                        {getProRataMeta.gap >= 0 ? '+' : ''}{formatCurrency(getProRataMeta.gap)}
+                     </p>
+                  </div>
+               </div>
+            </div>
+
           </div>
         </div>
 
