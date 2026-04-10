@@ -19,7 +19,7 @@ const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 );
 
 const Clients: React.FC = () => {
-  const { clients, addClient, updateClient, removeClient } = useAppContext();
+  const { clients, addClient, updateClient, removeClient, billings } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -177,56 +177,86 @@ const Clients: React.FC = () => {
 
   const headers = ['Razão Social', 'CNPJ', 'Município/UF', 'Situação', 'Recorrência', 'Cód. ERP', 'Ações'];
 
-  const renderRow = (client: Client) => (
-    <>
-      <td style={{ padding: '1rem' }}>
-        <div style={{ fontWeight: '600' }}>{client.razaoSocial}</div>
-        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{client.nomeFantasia}</div>
-      </td>
-      <td style={{ padding: '1rem' }}>{client.cnpj}</td>
-      <td style={{ padding: '1rem' }}>{client.municipio} / {client.uf}</td>
-      <td style={{ padding: '1rem' }}>
-        <span style={{ 
-          padding: '0.25rem 0.5rem', 
-          borderRadius: '4px', 
-          fontSize: '0.7rem', 
-          fontWeight: 'bold',
-          background: client.situacaoCadastral === 'ATIVA' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-          color: client.situacaoCadastral === 'ATIVA' ? '#10b981' : '#ef4444'
-        }}>
-          {client.situacaoCadastral || 'ATIVA'}
-        </span>
-      </td>
-      <td style={{ padding: '1rem' }}>
-        <span style={{ 
-          fontSize: '0.75rem', 
-          fontWeight: 'bold',
-          color: 'var(--primary)',
-          background: 'rgba(52, 115, 255, 0.05)',
-          padding: '0.2rem 0.6rem',
-          borderRadius: '12px',
-          border: '1px solid rgba(52, 115, 255, 0.2)'
-        }}>
-          {client.frequenciaCompra || 'Mensal'}
-        </span>
-      </td>
-      <td style={{ padding: '1rem' }}>
-        <code style={{ background: 'var(--surface)', padding: '0.2rem 0.4rem', borderRadius: '4px', fontSize: '0.8rem' }}>
-          {client.codigoErp || '-'}
-        </code>
-      </td>
-      <td style={{ padding: '1rem', display: 'flex', gap: '0.75rem' }}>
-        <button 
-          onClick={() => handleEdit(client)}
-          style={{ all: 'unset', cursor: 'pointer', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 'bold' }}
-        >Editar</button>
-        <button 
-          onClick={() => removeClient(client.id)}
-          style={{ all: 'unset', cursor: 'pointer', color: 'var(--danger)', fontSize: '0.75rem', fontWeight: 'bold' }}
-        >Excluir</button>
-      </td>
-    </>
-  );
+  const renderRow = (client: Client) => {
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const clientBillings = billings.filter((b: any) => b.cliente === client.razaoSocial && b.data.startsWith(currentMonthKey));
+    
+    let dotColor = '#ef4444'; // Vermelho
+    let statusTitle = 'Não comprou ainda dentro do mês';
+    
+    if (clientBillings.some((b: any) => b.status === 'FATURADO')) {
+      dotColor = '#10b981'; // Verde
+      statusTitle = 'Comprou (Faturado)';
+    } else if (clientBillings.some((b: any) => b.status === 'PENDENTE')) {
+      dotColor = '#f59e0b'; // Amarelo
+      statusTitle = 'Comprou mas não faturou (Pendente)';
+    }
+
+    return (
+      <>
+        <td style={{ padding: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div 
+              title={statusTitle}
+              style={{ 
+                minWidth: '10px', height: '10px', borderRadius: '50%', 
+                backgroundColor: dotColor, 
+                boxShadow: `0 0 6px ${dotColor}aa`,
+                cursor: 'help'
+              }} 
+            />
+            <div>
+              <div style={{ fontWeight: '600' }}>{client.razaoSocial}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{client.nomeFantasia}</div>
+            </div>
+          </div>
+        </td>
+        <td style={{ padding: '1rem' }}>{client.cnpj}</td>
+        <td style={{ padding: '1rem' }}>{client.municipio} / {client.uf}</td>
+        <td style={{ padding: '1rem' }}>
+          <span style={{ 
+            padding: '0.25rem 0.5rem', 
+            borderRadius: '4px', 
+            fontSize: '0.7rem', 
+            fontWeight: 'bold',
+            background: client.situacaoCadastral === 'ATIVA' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+            color: client.situacaoCadastral === 'ATIVA' ? '#10b981' : '#ef4444'
+          }}>
+            {client.situacaoCadastral || 'ATIVA'}
+          </span>
+        </td>
+        <td style={{ padding: '1rem' }}>
+          <span style={{ 
+            fontSize: '0.75rem', 
+            fontWeight: 'bold',
+            color: 'var(--primary)',
+            background: 'rgba(52, 115, 255, 0.05)',
+            padding: '0.2rem 0.6rem',
+            borderRadius: '12px',
+            border: '1px solid rgba(52, 115, 255, 0.2)'
+          }}>
+            {client.frequenciaCompra || 'Mensal'}
+          </span>
+        </td>
+        <td style={{ padding: '1rem' }}>
+          <code style={{ background: 'var(--surface)', padding: '0.2rem 0.4rem', borderRadius: '4px', fontSize: '0.8rem' }}>
+            {client.codigoErp || '-'}
+          </code>
+        </td>
+        <td style={{ padding: '1rem', display: 'flex', gap: '0.75rem' }}>
+          <button 
+            onClick={() => handleEdit(client)}
+            style={{ all: 'unset', cursor: 'pointer', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 'bold' }}
+          >Editar</button>
+          <button 
+            onClick={() => removeClient(client.id)}
+            style={{ all: 'unset', cursor: 'pointer', color: 'var(--danger)', fontSize: '0.75rem', fontWeight: 'bold' }}
+          >Excluir</button>
+        </td>
+      </>
+    );
+  };
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
